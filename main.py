@@ -5,3 +5,4 @@ TIMEOUT = 30
 
 def connect():
     print("Connecting...")
+    print(f"Max retries allowed: {MAX_RETRIES}")
