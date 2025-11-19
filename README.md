@@ -1,21 +1,34 @@
-
 [简体中文](./README_CN.md) | English
 
-# Gemini Commit Guard - Python Refactor (V3)
+# Gemini Commit Guard - Python Refactor (V3.5)
 
 An enterprise-grade Git pre-commit hook powered by **Google Gemini 2.0 Flash**. It acts as an AI architect, performing semantic analysis and static checks on your code during `git commit` to intercept potential bugs before they pollute the codebase.
 
-> **Evolution:**
-> * **V1/V2 (Legacy)**: Shell script + Node.js CLI (Tagged `v1.0-shell-poc`)
-> * **V3 (Current)**: Pure Python + Official Google SDK + Virtual Environment
+## 💡 Why Build This?
 
-## 💡 Why Python?
+**The Problem:** Traditional workflows (`git commit` -> `CI/CD`) are reactive. Bugs are caught *after* they enter the codebase, leading to messy revert commits and broken builds.
+**The Solution:** A proactive AI guard. By hooking into the commit process, we can use LLMs to "understand" the change in the context of the full file, catching invisible logic errors (like variable typos across scopes) that linters miss.
 
-While V1 proved the concept, V3 brings engineering maturity:
-* **Architecture**: Modular design (`GitClient`, `AIEngine`, `Main`).
-* **Robustness**: Python's `subprocess` handles Git output and encoding far better than Shell scripts.
-* **Speed**: Uses the latest `gemini-2.0-flash` model via the official Python SDK.
-* **Isolation**: Runs in a dedicated virtual environment (`venv`), keeping your global namespace clean.
+## 📜 Development Log (The Journey)
+
+This project evolved from a simple script to a robust engineering tool. Here is the path we took:
+
+### Phase 1: The Shell POC (V1 & V2)
+* **Goal**: Prove that `git diff` could be piped to Gemini CLI to stop a commit.
+* **Challenge**: Windows `CRLF` line endings and `BOM` encoding broke the Shell script repeatedly.
+* **Breakthrough**: V2 introduced **Context Awareness**. Instead of just sending the `diff`, we read the full file content. This allowed the AI to detect that `MAX_RETRY` (typo) did not match `MAX_RETRIES` (defined at the top of the file).
+
+### Phase 2: The Python Refactor (V3)
+* **Goal**: Solve cross-platform issues and improve architecture.
+* **Solution**: Re-wrote the core logic in Python using `subprocess` for Git operations and the official Google SDK (`google-generativeai`) for API calls.
+* **Architecture**: Implemented a modular design with `GitClient` (Data Layer), `AIEngine` (Service Layer), and `Main` (Controller).
+
+### Phase 3: The "Talkative AI" Incident (V3.5)
+* **The Bug**: The AI was *too* helpful. When reviewing the code, it wrote a long essay praising the refactoring. However, the essay contained the word `[WARNING]` (quoting our own code), which triggered our regex parser and blocked a valid commit!
+* **The Fix**: We moved from simple String Matching to **Structured JSON Output**.
+* **Implementation**: We utilized the **Native JSON Mode** (`response_mime_type="application/json"`) in Gemini 1.5/2.0 models to force the AI to return a strict JSON object, ensuring deterministic parsing.
+
+---
 
 ## 🚀 Installation
 
@@ -54,42 +67,23 @@ cp pre-commit .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
 ```
 
-*(Note: The `pre-commit` shim automatically activates the `venv` before running the Python logic.)*
-
 -----
 
 ## 🏗️ Architecture
 
-The project follows a clean, modular structure:
-
 ```text
 gemini-guard/
 ├── src/
-│   ├── main.py          # Entry point & Logic Handler
-│   ├── git_client.py    # Handles git diff & context extraction
-│   └── ai_engine.py     # Wraps Google Generative AI SDK
-├── venv/                # Isolated Python Environment
-├── requirements.txt     # Dependency lock file
-└── pre-commit           # Shell Shim (The bridge between Git and Python)
+│   ├── main.py          # Logic Controller & JSON Parser
+│   ├── git_client.py    # Git Operations (Diff & Context)
+│   └── ai_engine.py     # Gemini SDK Wrapper (Native JSON Mode)
+├── venv/                # Isolated Environment
+├── pre-commit           # Shell Shim
+└── requirements.txt     # Dependencies
 ```
 
-## 💻 Usage
+## 🧪 Capabilities
 
-Just commit as usual\!
-
-```bash
-git add .
-git commit -m "My awesome feature"
-```
-
-  * **If code is safe**: `[PASS]` -\> Commit succeeds.
-  * **If bugs found**: `[WARNING]` -\> Commit blocked. You will see the AI's analysis in the terminal.
-
------
-
-## 🧪 Verified Capabilities
-
-  * **SQL Injection Detection**: Catches dangerous string concatenations in SQL queries.
-  * **Context Awareness**: Identifies typos in variable names by reading the full file context (e.g., `MAX_RETRY` vs `MAX_RETRIES`).
-  * **Logical Consistency**: Ensures new code aligns with existing class definitions.
-
+  * **SQL Injection Detection**: Identifies dangerous string concatenations.
+  * **Context-Aware Typo Detection**: Reads full files to verify variable definitions.
+  * **Robust JSON Parsing**: immune to "prompt injection" or verbose AI responses.
