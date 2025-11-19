@@ -87,3 +87,21 @@ gemini-guard/
   * **SQL Injection Detection**: Identifies dangerous string concatenations.
   * **Context-Aware Typo Detection**: Reads full files to verify variable definitions.
   * **Robust JSON Parsing**: immune to "prompt injection" or verbose AI responses.
+
+---
+
+## 🔮 Product Roadmap: The Road to V5
+
+We are transitioning Gemini Guard from a "Python Tool" to a **"Standalone DevOps Product"**.
+
+### 🔜 Milestone 1: Centralized Intelligence (V4.5)
+* **Global Database**: Move storage to `~/.gemini-guard/` to act as a central hub for all your projects.
+* **Multi-Project Support**: Isolate audit logs by project path. Manage 10+ repositories in a single Dashboard.
+
+### 🔜 Milestone 2: Zero-Dependency (V5)
+* **Binary Distribution**: Package the entire tool (Python + Streamlit + SDK) into a single `.exe` or binary file using **PyInstaller**.
+* **Target Audience**: Enable Frontend/Java/Go developers to use Gemini Guard without installing Python or Pip.
+
+### 🔜 Milestone 3: The "One-Click" Experience
+* **`gg init`**: A new CLI command to automatically detect the repo, install hooks, and register the project in the global database.
+* **Unified Dashboard**: A switchable interface to monitor the health of all your active projects in one view.
